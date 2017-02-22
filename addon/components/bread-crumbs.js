@@ -100,7 +100,7 @@ export default Component.extend({
           path,
           isHead,
           isTail,
-          linkable: breadCrumb.hasOwnProperty('linkable') ? breadCrumb.linkable : crumbLinkable
+          linkable: (!Ember.isEmpty(breadCrumb.linkable)) ? breadCrumb.linkable : crumbLinkable, crumbLinkable
         });
       }
 
