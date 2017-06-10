@@ -1,15 +1,18 @@
 import Ember from 'ember';
 import layout from '../templates/components/bread-crumbs';
-import getOwner from 'ember-getowner-polyfill';
 
 const {
   get,
   Component,
   computed,
+  copy,
   getWithDefault,
   assert,
+  deprecate,
+  isPresent,
   typeOf,
   setProperties,
+  getOwner,
   A: emberArray,
   String: { classify }
 } = Ember;
@@ -32,7 +35,7 @@ export default Component.extend({
     get() {
       const currentRouteName = getWithDefault(this, 'currentRouteName', false);
 
-      assert('[ember-crumbly] Could not find a curent route', currentRouteName);
+      assert('[ember-crumbly] Could not find a current route', currentRouteName);
 
       const routeNames = currentRouteName.split('.');
       const filteredRouteNames = this._filterIndexAndLoadingRoutes(routeNames);
@@ -46,6 +49,9 @@ export default Component.extend({
     get() {
       let className = 'breadcrumb';
       const outputStyle = getWithDefault(this, 'outputStyle', '');
+      if (isPresent(outputStyle)) {
+        deprecate('outputStyle option will be deprecated in the next major release', false, { id: 'ember-crumbly.outputStyle', until: '2.0.0' });
+      }
       const lowerCaseOutputStyle = outputStyle.toLowerCase();
 
       if (lowerCaseOutputStyle === 'foundation') {
@@ -80,7 +86,7 @@ export default Component.extend({
     const defaultLinkable = get(this, 'linkable');
     const pathLength = filteredRouteNames.length;
     const breadCrumbs = filteredRouteNames.map((name, index) => {
-      const path = this._guessRoutePath(routeNames, name, index);
+      let path = this._guessRoutePath(routeNames, name, index);
       const route = this._lookupRoute(path);
       const isHead = index === 0;
       const isTail = index === pathLength - 1;
@@ -89,13 +95,17 @@ export default Component.extend({
 
       assert(`[ember-crumbly] \`route:${path}\` was not found`, route);
 
-      let breadCrumb = getWithDefault(route, 'breadCrumb', {
+      let breadCrumb = copy(getWithDefault(route, 'breadCrumb', {
         title: classify(name)
-      });
+      }));
 
       if (typeOf(breadCrumb) === 'null') {
         return;
       } else {
+        if (isPresent(breadCrumb.path)) {
+          path = breadCrumb.path;
+        }
+
         setProperties(breadCrumb, {
           path,
           isHead,

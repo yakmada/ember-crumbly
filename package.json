@@ -1,6 +1,6 @@
 {
   "name": "ember-crumbly",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Declarative breadcrumb navigation for Ember apps",
   "directories": {
     "doc": "doc",
@@ -50,7 +50,7 @@
   "dependencies": {
     "ember-cli-babel": "^5.1.6",
     "ember-cli-htmlbars": "^1.1.0",
-    "ember-getowner-polyfill": "^1.0.0"
+    "ember-getowner-polyfill": "^1.2.3"
   },
   "ember-addon": {
     "configPath": "tests/dummy/config",

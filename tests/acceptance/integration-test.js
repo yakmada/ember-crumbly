@@ -4,10 +4,11 @@ import moduleForAcceptance from '../helpers/module-for-acceptance';
 import { lookupComponent } from '../helpers/lookup';
 
 let componentInstance;
+let applicationInstance;
 
 moduleForAcceptance('Acceptance | ember-crumbly integration test', {
   beforeEach() {
-    componentInstance = lookupComponent(this.application, 'bread-crumbs');
+    applicationInstance = this.application;
   },
 
   afterEach() {
@@ -20,6 +21,7 @@ test('routeHierarchy returns the correct number of routes', function(assert) {
   visit('/foo/bar/baz');
 
   andThen(() => {
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
     const numberOfRenderedBreadCrumbs = find('#bootstrapLinkable li').length;
     assert.equal(currentRouteName(), 'foo.bar.baz.index', 'correct current route name');
@@ -33,6 +35,7 @@ test('routes that opt-out are not shown', function(assert) {
   visit('/foo/bar/baz/hidden');
 
   andThen(() => {
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
     const numberOfRenderedBreadCrumbs = find('#foundationLinkable li').length;
     assert.equal(currentRouteName(), 'foo.bar.baz.hidden', 'correct current route name');
@@ -47,6 +50,7 @@ test('top-level flat routes render correctly', function(assert) {
 
   andThen(() => {
     const $breadCrumbs = find('#foundationLinkable li');
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
     const numberOfRenderBreadCrumbs = $breadCrumbs.length;
     assert.equal(currentRouteName(), 'about', 'correct current route name');
@@ -61,6 +65,7 @@ test('routes can set dynamic breadcrumb props', function(assert) {
   visit('/foo/bar/baz/show');
 
   andThen(() => {
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
     const routeTitles = routeHierarchy.map((route) => route.title);
     const routeLooks = routeHierarchy.map((route) => route.look);
@@ -81,6 +86,7 @@ test('breadcrumb data includes isTail and isHead', function(assert) {
   visit('/foo/bar/baz/show');
 
   andThen(() => {
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
 
     assert.equal(routeHierarchy[0].isHead, true, 'first route is head');
@@ -95,6 +101,7 @@ test('first route is tail and head when on root', function(assert) {
   visit('/foo');
 
   andThen(() => {
+    componentInstance = lookupComponent(applicationInstance, 'bread-crumbs');
     const routeHierarchy = componentInstance.get('routeHierarchy');
 
     assert.equal(routeHierarchy.length, 1, 'There is 1 route');
@@ -229,7 +236,7 @@ test('bread-crumbs change when the route is changed', function(assert) {
   click('#bootstrapLinkable li:first-child a');
 
   andThen(() => {
-    const lastCrumbText = find('#bootstrapLinkable li:last-child a').text().trim();
+    const lastCrumbText = find('#bootstrapLinkable li:last-child').text().trim();
 
     assert.equal(currentRouteName(), 'foo.index', 'correct current route name (after transition)');
     assert.equal(lastCrumbText, 'I am Foo Index', 'renders the correct last breadcrumb (after transition)');
@@ -250,5 +257,43 @@ test('bread-crumbs component updates when dynamic segments change', function(ass
   andThen(() => {
     assert.equal(currentRouteName(), 'foo.bar.baz.show-with-params', 'correct current route name');
     assert.equal(Ember.$('#bootstrapLinkable li:last-child')[0].innerText.trim(), 'Hansel McDonald', 'crumb is based on dynamic segment');
+  });
+});
+
+test('parent route becomes linkable when navigating to child', function(assert) {
+  assert.expect(4);
+  visit('/foo/bar');
+
+  andThen(() => {
+    const numberOfRenderedBreadCrumbs = find('#bootstrapLinkable li').length;
+    const numberOfRenderedLinkBreadCrumbs = find('#bootstrapLinkable li a').length;
+
+    assert.equal(numberOfRenderedBreadCrumbs, 2, 'renders correct number of bread crumbs');
+    assert.equal(numberOfRenderedLinkBreadCrumbs, 1, 'renders correct number of links');
+  });
+
+  visit('/foo/bar/baz');
+
+  andThen(() => {
+    const numberOfRenderedBreadCrumbs = find('#bootstrapLinkable li').length;
+    const numberOfRenderedLinkBreadCrumbs = find('#bootstrapLinkable li a').length;
+
+    assert.equal(numberOfRenderedBreadCrumbs, 3, 'renders correct number of bread crumbs');
+    assert.equal(numberOfRenderedLinkBreadCrumbs, 2, 'renders correct number of links');
+  });
+});
+
+test('uses path from breadCrumb if present', function(assert) {
+  assert.expect(2);
+  visit('/bar/baz');
+
+  andThen(() => {
+    assert.equal(currentRouteName(), 'bar.baz', 'correct current route name');
+  });
+
+  click('#bootstrapLinkable li:first-child a');
+
+  andThen(() => {
+    assert.equal(currentRouteName(), 'foo.index', 'correct current route name');
   });
 });
